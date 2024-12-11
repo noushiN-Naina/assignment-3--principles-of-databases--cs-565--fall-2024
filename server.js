@@ -20,7 +20,7 @@ const colors = {
 
 let db;
 
-jghjghj
+
 /*
  * Configure the “views” folder to work with Nunjucks
  */
@@ -161,6 +161,40 @@ app.get(`/update-a-db-record`, (req, res) => {
         }
     });
 });
+
+app.post(`/update-a-db-record`, (req, res) => {
+  const { name, password } = req.body;
+
+  db.collection(dbCollection).updateOne(
+      { name: name }, // Match the record by name
+      { $set: { password: password } }, // Update the password
+      (err, result) => {
+          if (err) {
+              console.log(colors.red, `Error updating record:`, err, colors.reset);
+              return res.status(500).send('Error updating record.');
+          } else if (result.matchedCount === 0) {
+              console.log(colors.yellow, `No matching record found for name: ${name}`, colors.reset);
+              return res.status(404).send('No record found.');
+          } else {
+              console.log(colors.green, `Updated record for name: ${name}`, colors.reset);
+
+              // Fetch updated data and pass it along with a message
+              db.collection(dbCollection).find().toArray((findErr, arrayObject) => {
+                  if (findErr) {
+                      console.log(colors.red, `Error fetching records:`, findErr, colors.reset);
+                      return res.status(500).send('Error fetching records.');
+                  } else {
+                      res.render(`read-from-database.njk`, {
+                          mongoDBArray: arrayObject, // Updated data
+                          message: `Password for user "${name}" successfully updated!`
+                      });
+                  }
+              });
+          }
+      }
+  );
+});
+
 
 /*
  * This router handles GET requests to
