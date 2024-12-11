@@ -7,6 +7,17 @@
   {% include 'blocks/css/reading-font.njk' %}
   {% include 'blocks/css/font-awesome-css.njk' %}
   {% include 'blocks/css/main-css.njk' %}
+
+<script>
+  // Show popup message if it exists
+  window.onload = function () {
+    const popupMessage = "{{ popupMessage }}";
+    if (popupMessage && popupMessage !== '') {
+      alert(popupMessage); // Show popup alert
+    }
+  };
+</script>
+
 </head>
 <body>
   <header>
@@ -35,7 +46,8 @@
       <tbody>
         {%- for item in mongoDBArray -%}
         <tr>
-          <td>{{ item.name }}</td><td>{{ item.password }}</td>
+          <td>{{ item.name }}</td>
+          <td>{{ item.password }}</td>
         </tr>
         {%- endfor %}
       </tbody>

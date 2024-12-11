@@ -102,19 +102,35 @@ app.get(`/`, (req, res) => {
 /*
  * This router handles GET requests to http://localhost:3000/read-a-db-record/
  */
-app.get(`/read-a-db-record`, (req, res) => {
-    db.collection(dbCollection).find().toArray((err, arrayObject) => {
-        if (err) {
-            return console.log(err);
-        } else {
-            console.log(`User requested http://${HOST}:${port}/read-a-db-record.`);
-            console.log(`Responding to request with file`,
-                colors.green, `read-from-database.njk`, colors.reset, `via GET.\n`);
+// app.get(`/read-a-db-record`, (req, res) => {
+//     db.collection(dbCollection).find().toArray((err, arrayObject) => {
+//         if (err) {
+//             return console.log(err);
+//         } else {
+//             console.log(`User requested http://${HOST}:${port}/read-a-db-record.`);
+//             console.log(`Responding to request with file`,
+//                 colors.green, `read-from-database.njk`, colors.reset, `via GET.\n`);
 
-            res.render(`read-from-database.njk`, {mongoDBArray: arrayObject});
-        }
-    });
+//             res.render(`read-from-database.njk`, {mongoDBArray: arrayObject});
+//         }
+//     });
+// });
+
+app.get(`/read-a-db-record`, (req, res) => {
+  const popupMessage = req.query.popupMessage || ''; // Get message from query if available
+  db.collection(dbCollection).find().toArray((err, arrayObject) => {
+      if (err) {
+          console.log(colors.red, `Error fetching records:`, err, colors.reset);
+          return res.status(500).send('Error fetching records.');
+      } else {
+          res.render(`read-from-database.njk`, {
+              mongoDBArray: arrayObject,
+              popupMessage: popupMessage // Pass the popup message to the view
+          });
+      }
+  });
 });
+
 
 /*
  * This router handles GET requests to
@@ -162,6 +178,7 @@ app.get(`/update-a-db-record`, (req, res) => {
     });
 });
 
+
 app.post(`/update-a-db-record`, (req, res) => {
   const { name, password } = req.body;
 
@@ -177,24 +194,12 @@ app.post(`/update-a-db-record`, (req, res) => {
               return res.status(404).send('No record found.');
           } else {
               console.log(colors.green, `Updated record for name: ${name}`, colors.reset);
-
-              // Fetch updated data and pass it along with a message
-              db.collection(dbCollection).find().toArray((findErr, arrayObject) => {
-                  if (findErr) {
-                      console.log(colors.red, `Error fetching records:`, findErr, colors.reset);
-                      return res.status(500).send('Error fetching records.');
-                  } else {
-                      res.render(`read-from-database.njk`, {
-                          mongoDBArray: arrayObject, // Updated data
-                          message: `Password for user "${name}" successfully updated!`
-                      });
-                  }
-              });
+              // Redirect with a popup message
+              res.redirect(`/read-a-db-record?popupMessage=${encodeURIComponent(`Password for user successfully updated!`)}`);
           }
       }
   );
 });
-
 
 /*
  * This router handles GET requests to
