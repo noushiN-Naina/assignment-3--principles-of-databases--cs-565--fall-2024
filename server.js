@@ -205,9 +205,41 @@ app.post(`/update-a-db-record`, (req, res) => {
  * This router handles GET requests to
  * http://localhost:3000/delete-a-db-record/
  */
+// app.get(`/delete-a-db-record`, (req, res) => {
+//     db.collection(dbCollection).find().toArray((err, arrayObject) => {
+//         res.render(`delete-a-record-in-database.njk`,
+//             {mongoDBArray: arrayObject});
+//     });
+// });
+
 app.get(`/delete-a-db-record`, (req, res) => {
-    db.collection(dbCollection).find().toArray((err, arrayObject) => {
-        res.render(`delete-a-record-in-database.njk`,
-            {mongoDBArray: arrayObject});
-    });
+  const popupMessage = req.query.popupMessage || ''; // Get message from query if available
+  db.collection(dbCollection).find().toArray((err, arrayObject) => {
+      if (err) {
+          console.log(colors.red, `Error fetching records:`, err, colors.reset);
+          return res.status(500).send('Error fetching records.');
+      } else {
+          res.render(`delete-a-record-in-database.njk`, {
+              mongoDBArray: arrayObject,
+              popupMessage: popupMessage // Pass the popup message to the view
+          });
+      }
+  });
+});
+
+app.post(`/delete-a-db-record`, (req, res) => {
+  const { name } = req.body; // Get the record name to delete
+
+  db.collection(dbCollection).deleteOne({ name: name }, (err, result) => {
+      if (err) {
+          console.log(colors.red, `Error deleting record:`, err, colors.reset);
+          return res.status(500).send('Error deleting record.');
+      } else if (result.deletedCount === 0) {
+          console.log(colors.yellow, `No matching record found for name: ${name}`, colors.reset);
+          res.redirect(`/delete-a-db-record?popupMessage=${encodeURIComponent(`No record found for user "${name}"`)}`);
+      } else {
+          console.log(colors.green, `Deleted record for name: ${name}`, colors.reset);
+          res.redirect(`/delete-a-db-record?popupMessage=${encodeURIComponent(`User successfully deleted!`)}`);
+      }
+  });
 });
